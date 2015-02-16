@@ -3,61 +3,50 @@ var easymidi = require('../index');
 // create virtual midi output named 'test output'
 var output = new easymidi.Output('test output', true);
 
-output.send({
-  type: 'noteoff',
+output.send('noteoff', {
   note: 64,
   velocity: 0,
   channel: 0
 });
 
-output.send({
-  type: 'noteon',
+output.send('noteon', {
   note: 64,
   velocity: 127,
   channel: 0
 });
 
-output.send({
-  type: 'cc',
+output.send('cc', {
   controller: 64,
   value: 127,
   channel: 0
 });
 
-output.send({
-  type: 'poly aftertouch',
+output.send('poly aftertouch', {
   note: 64,
   pressure: 127,
   channel: 0
 });
 
-output.send({
-  type: 'channel aftertouch',
+output.send('channel aftertouch', {
   pressure: 127,
   channel: 0
 });
 
-output.send({
-  type: 'program',
+output.send('program', {
   number: 2,
   channel: 0
 });
 
-output.send({
-  type: 'pitch',
-  msb: 10,
-  lsb: 64,
+output.send('pitch', {
+  value: 12345,
   channel: 0
 });
 
-output.send({
-  type: 'position',
-  msb: 10,
-  lsb: 64
+output.send('position', {
+  value: 12345
 });
 
-output.send({
-  type: 'select',
+output.send('select', {
   song: 10
 });
 

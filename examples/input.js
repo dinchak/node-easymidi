@@ -28,11 +28,11 @@ input.on('channel aftertouch', function (msg) {
 });
 
 input.on('pitch', function (msg) {
-  console.log('pitch', msg.msb, msg.lsb, msg.channel);
+  console.log('pitch', msg.value, msg.channel);
 });
 
 input.on('position', function (msg) {
-  console.log('position', msg.msb, msg.lsb);
+  console.log('position', msg.value);
 });
 
 input.on('select', function (msg) {
