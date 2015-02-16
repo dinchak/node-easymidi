@@ -1,0 +1,32 @@
+{
+  "name": "easymidi",
+  "version": "0.0.0",
+  "description": "Simple event-based MIDI messaging",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dinchak/node-easymidi.git"
+  },
+  "keywords": [
+    "midi"
+  ],
+  "author": {
+    "name": "Tom Dinchak",
+    "email": "dinchak@gmail.com"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dinchak/node-easymidi/issues"
+  },
+  "homepage": "https://github.com/dinchak/node-easymidi",
+  "dependencies": {
+    "midi": "^0.9.1"
+  },
+  "devDependencies": {
+    "chai": "^2.0.0",
+    "mocha": "^2.1.0"
+  }
+}
