@@ -6,8 +6,7 @@ var output = new easymidi.Output('test output', true);
 
 // route send to input
 output.send = function (type, args) {
-  var bytes = output.parseMessage(type, args);
-  input._input.emit('message', -1, bytes);
+  input._input.emit('message', -1, output.parseMessage(type, args));
 };
 
 it('receives a noteon message', function (done) {
