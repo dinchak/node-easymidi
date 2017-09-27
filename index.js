@@ -22,7 +22,10 @@ var Input = function (name, virtual) {
   var self = this;
   this._input.on('message', function (deltaTime, bytes) {
     var data = self.parseMessage(bytes);
+    data.msg._type = data.type; // easy access to message type
     self.emit(data.type, data.msg);
+    // also emit "message" event, to allow easy monitoring of all messages
+    self.emit("message", data.msg);
   });
 };
 
@@ -83,6 +86,9 @@ Input.prototype.parseMessage = function (bytes) {
   }
   if (type == 'pitch' || type == 'position') {
     msg.value = bytes[1] + (bytes[2] * 128);
+  }
+  if (type == 'sysex') {
+    msg.bytes = bytes;
   }
   if (type == 'select') {
     msg.song = bytes[1];

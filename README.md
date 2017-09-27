@@ -67,6 +67,7 @@ The following table describes the MIDI message types that are supported and the 
 |--------------------|--------------------|------------------|----------------|
 | noteon             | note [0-127]       | velocity [0-127] | channel [0-15] |
 | noteoff            | note [0-127]       | velocity [0-127] | channel [0-15] |
+| poly aftertouch    | note [0-127]       | velocity [0-127] | channel [0-15] |
 | cc                 | controller [0-127] | value [0-127]    | channel [0-15] |
 | program            | number [0-127]     |                  | channel [0-15] |
 | channel aftertouch | pressure [0-127]   |                  | channel [0-15] |
