@@ -80,6 +80,7 @@ The following table describes the MIDI message types that are supported and the 
 | continue           |                    |                  |                |
 | stop               |                    |                  |                |
 | reset              |                    |                  |                |
+| sysex              | bytes (variable length array) |             |                | 
 
 # Examples
 
@@ -107,6 +108,12 @@ Listen for midi clock messages:
 input.on('clock', function () {
   // do something on every clock tick
 });
+```
+
+Send a sysex message.  
+Throws an error if array does not start with 0xf0 (240) and end with 0xf7 (247).
+```javascript
+output.send('sysex',[240, 126, 1, 6, 1, 247]);
 ```
 
 See the [example programs](https://github.com/dinchak/node-easymidi/tree/master/examples) for more examples.

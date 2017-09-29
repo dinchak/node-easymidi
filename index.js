@@ -202,6 +202,13 @@ Output.prototype.parseMessage = function (type, args) {
   if (type == 'select') {
     bytes.push(args.song);
   }
+  if (type == 'sysex') {  
+    // sysex commands should start with 0xf0 and end with 0xf7. Throw an error if it doesn't.
+    if (args.length<=3 || args[0]!=0xf0 || args[args.length-1]!=0xf7) { //
+      throw new Error("sysex commands should be an array that starts with 0xf0 and end with 0xf7");
+    }
+    args.slice(1).forEach(function(arg){bytes.push(arg);}); // 0xf0 was already added at the beginning of parseMessage.
+  }
   return bytes;
 };
 
