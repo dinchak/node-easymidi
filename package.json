@@ -27,6 +27,6 @@
     "mocha": "^5.2.0"
   },
   "dependencies": {
-    "midi": "^0.9.5"
+    "midi": "^1.0.0"
   }
 }
