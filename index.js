@@ -1,5 +1,8 @@
 var midi = require('midi');
 var EventEmitter = require('events').EventEmitter;
+var smpte = [];
+var smpteMessageCounter = 0;
+var smpteType;
 
 var Input = function (name, virtual) {
   this._input = new midi.input();
@@ -26,6 +29,9 @@ var Input = function (name, virtual) {
     self.emit(data.type, data.msg);
     // also emit "message" event, to allow easy monitoring of all messages
     self.emit("message", data.msg);
+    if (data.type == 'mtc') {
+      self.parseMtc(data.msg);
+    }
   });
 };
 
@@ -33,6 +39,40 @@ Input.prototype = Object.create(EventEmitter.prototype);
 
 Input.prototype.close = function () {
   this._input.closePort();
+};
+
+Input.prototype.parseMtc = function (data) {
+  var byteNumber = data.type
+  var value = data.value
+  if (byteNumber == 7) {
+    var bits = [];
+    for (var i = 3; i >= 0; i--) {
+      var bit = value & (1 << i) ? 1 : 0;
+      bits.push(bit);
+    }
+    value = bits[3];
+    smpteType = (bits[1] * 2) + bits[2];
+  }
+  smpte[byteNumber] = value;
+  if (smpteMessageCounter != 7){
+    smpteMessageCounter++;
+    return;
+  }
+  if (byteNumber == 7) {
+    var smpteFormatted =
+        (smpte[7] * 16 + smpte[6]).toString().padStart(2, '0')
+        + ':'
+        + (smpte[5] * 16 + smpte[4]).toString().padStart(2, '0')
+        + ':'
+        + (smpte[3] * 16 + smpte[2]).toString().padStart(2, '0')
+        + ':'
+        + (smpte[1] * 16 + smpte[0]).toString().padStart(2, '0');
+
+    this.emit("smpte", {
+      smpte: smpteFormatted,
+      smpteType: smpteType
+    });
+  }
 };
 
 Input.prototype.parseMessage = function (bytes) {
@@ -202,7 +242,7 @@ Output.prototype.parseMessage = function (type, args) {
   if (type == 'select') {
     bytes.push(args.song);
   }
-  if (type == 'sysex') {  
+  if (type == 'sysex') {
     // sysex commands should start with 0xf0 and end with 0xf7. Throw an error if it doesn't.
     if (args.length<=3 || args[0]!=0xf0 || args[args.length-1]!=0xf7) { //
       throw new Error("sysex commands should be an array that starts with 0xf0 and end with 0xf7");
