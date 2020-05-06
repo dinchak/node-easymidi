@@ -3,6 +3,8 @@ var EventEmitter = require('events').EventEmitter;
 var smpte = [];
 var smpteMessageCounter = 0;
 var smpteType;
+var sysex = [];
+var pendingSysex = false;
 
 var Input = function (name, virtual) {
   this._input = new midi.input();
@@ -24,13 +26,42 @@ var Input = function (name, virtual) {
   }
   var self = this;
   this._input.on('message', function (deltaTime, bytes) {
-    var data = self.parseMessage(bytes);
-    data.msg._type = data.type; // easy access to message type
-    self.emit(data.type, data.msg);
-    // also emit "message" event, to allow easy monitoring of all messages
-    self.emit("message", data.msg);
-    if (data.type == 'mtc') {
-      self.parseMtc(data.msg);
+    
+    // a long sysex can be sent in multiple chunks, depending on the RtMidi buffer size
+    var proceed = true;
+    if(pendingSysex && (bytes.length > 0)) {
+      if(bytes[0] < 0x80) {
+        sysex = sysex.concat(bytes); 
+        if(bytes[bytes.length-1] === 0xf7) {
+          var msg = {_type: 'sysex', bytes: sysex};
+          self.emit('sysex', msg);
+          self.emit('message', msg);
+          sysex = [];
+          pendingSysex = false;
+        }
+        proceed = false;
+      }
+      else {
+        // ignore invalid sysex messages   
+        sysex = [];
+        pendingSysex = false;
+      }
+    }
+    if(proceed) {
+      var data = self.parseMessage(bytes);
+      if((data.type === 'sysex') && (bytes[bytes.length-1] !== 0xf7)) {
+        sysex = [...bytes];
+        pendingSysex = true;
+      }
+      else {
+        data.msg._type = data.type; // easy access to message type
+        self.emit(data.type, data.msg);
+        // also emit "message" event, to allow easy monitoring of all messages
+        self.emit("message", data.msg);
+        if (data.type == 'mtc') {
+          self.parseMtc(data.msg);
+        }
+      }
     }
   });
 };
