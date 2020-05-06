@@ -1,7 +1,7 @@
 var easymidi = require('../index.js');
 
 // create virtual midi input named 'input test'
-var input = new easymidi.Input('input test', true);
+var input = new easymidi.Input('LPK25');
 
 input.on('noteoff', function (msg) {
   console.log('noteoff', msg.note, msg.velocity, msg.channel);
