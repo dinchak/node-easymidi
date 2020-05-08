@@ -127,6 +127,7 @@ Input.prototype.parseMessage = function (bytes) {
     0xFA: 'start',
     0xFB: 'continue',
     0xFC: 'stop',
+    0xFE: 'activesense',
     0xFF: 'reset'
   };
   var type = 'unknown';
@@ -232,6 +233,7 @@ Output.prototype.parseMessage = function (type, args) {
     'start': 0xFA,
     'continue': 0xFB,
     'stop': 0xFC,
+    'activesense': 0xFE,
     'reset': 0xFF
   };
 

@@ -79,6 +79,7 @@ The following table describes the MIDI message types that are supported and the 
 | start              |                    |                  |                |
 | continue           |                    |                  |                |
 | stop               |                    |                  |                |
+| activesense        |                    |                  |                |
 | reset              |                    |                  |                |
 | sysex              | bytes (variable length array) |             |                | 
 
