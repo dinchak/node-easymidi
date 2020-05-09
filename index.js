@@ -72,6 +72,10 @@ Input.prototype.close = function () {
   this._input.closePort();
 };
 
+Input.prototype.isPortOpen = function () {
+  return this._input.isPortOpen();
+};
+
 Input.prototype.parseMtc = function (data) {
   var byteNumber = data.type
   var value = data.value
@@ -206,6 +210,10 @@ var Output = function (name, virtual) {
 
 Output.prototype.close = function () {
   this._output.closePort();
+};
+
+Output.prototype.isPortOpen = function () {
+  return this._output.isPortOpen();
 };
 
 Output.prototype.send = function (type, args) {
