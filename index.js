@@ -1,100 +1,133 @@
-var midi = require('midi');
-var EventEmitter = require('events').EventEmitter;
-var smpte = [];
-var smpteMessageCounter = 0;
-var smpteType;
-var sysex = [];
-var pendingSysex = false;
+const midi = require('midi');
+const EventEmitter = require('events').EventEmitter;
 
-var Input = function (name, virtual) {
-  this._input = new midi.input();
-  this._input.ignoreTypes(false, false, false);
-  if (virtual) {
-    this._input.openVirtualPort(name);
-  } else {
-    var numInputs = this._input.getPortCount();
-    var found = false;
-    for (var i = 0; i < numInputs; i++) {
-      if (name == this._input.getPortName(i)) {
-        found = true;
-        this._input.openPort(i);
-      }
-    }
-    if (!found) {
-      throw new Error('No MIDI input found with name: ' + name);
-    }
-  }
-  var self = this;
-  this._input.on('message', function (deltaTime, bytes) {
-    
-    // a long sysex can be sent in multiple chunks, depending on the RtMidi buffer size
-    var proceed = true;
-    if(pendingSysex && (bytes.length > 0)) {
-      if(bytes[0] < 0x80) {
-        sysex = sysex.concat(bytes); 
-        if(bytes[bytes.length-1] === 0xf7) {
-          var msg = {_type: 'sysex', bytes: sysex};
-          self.emit('sysex', msg);
-          self.emit('message', msg);
-          sysex = [];
-          pendingSysex = false;
-        }
-        proceed = false;
-      }
-      else {
-        // ignore invalid sysex messages   
-        sysex = [];
-        pendingSysex = false;
-      }
-    }
-    if(proceed) {
-      var data = self.parseMessage(bytes);
-      if((data.type === 'sysex') && (bytes[bytes.length-1] !== 0xf7)) {
-        sysex = [...bytes];
-        pendingSysex = true;
-      }
-      else {
-        data.msg._type = data.type; // easy access to message type
-        self.emit(data.type, data.msg);
-        // also emit "message" event, to allow easy monitoring of all messages
-        self.emit("message", data.msg);
-        if (data.type == 'mtc') {
-          self.parseMtc(data.msg);
+const swap = (obj) => Object.entries(obj).reduce((acc, [key, value]) => {
+  acc[value] = key;
+  return acc;
+}, {});
+
+const INPUT_TYPES = {
+  0x08: 'noteoff',
+  0x09: 'noteon',
+  0x0A: 'poly aftertouch',
+  0x0B: 'cc',
+  0x0C: 'program',
+  0x0D: 'channel aftertouch',
+  0x0E: 'pitch',
+};
+const INPUT_EXTENDED_TYPES = {
+  0xF0: 'sysex',
+  0xF1: 'mtc',
+  0xF2: 'position',
+  0xF3: 'select',
+  0xF6: 'tune',
+  0xF7: 'sysex end',
+  0xF8: 'clock',
+  0xFA: 'start',
+  0xFB: 'continue',
+  0xFC: 'stop',
+  0xFE: 'activesense',
+  0xFF: 'reset'
+};
+const OUTPUT_TYPES = swap(INPUT_TYPES);
+const OUTPUT_EXTENDED_TYPES = swap(INPUT_EXTENDED_TYPES);
+
+class Input extends EventEmitter {
+  constructor(name, virtual) {
+    super();
+    this._input = new midi.input();
+    this._input.ignoreTypes(false, false, false);
+    this._pendingSysex = false;
+    this._sysex = [];
+    this.name = name;
+
+    if (virtual) {
+      this._input.openVirtualPort(name);
+    } else {
+      const numInputs = this._input.getPortCount();
+      let found = false;
+      for (let i = 0; i < numInputs; i++) {
+        if (name === this._input.getPortName(i)) {
+          found = true;
+          this._input.openPort(i);
         }
       }
+      if (!found) {
+        throw new Error('No MIDI input found with name: ' + name);
+      }
     }
-  });
-};
 
-Input.prototype = Object.create(EventEmitter.prototype);
+    this._input.on('message', (deltaTime, bytes) => {
+      // a long sysex can be sent in multiple chunks, depending on the RtMidi buffer size
+      let proceed = true;
+      if (this._pendingSysex && (bytes.length > 0)) {
+        if (bytes[0] < 0x80) {
+          this._sysex = this._sysex.concat(bytes);
+          if (bytes[bytes.length - 1] === 0xf7) {
+            const msg = { _type: 'sysex', bytes: this._sysex };
+            this.emit('sysex', msg);
+            this.emit('message', msg);
+            sysex = [];
+            this._pendingSysex = false;
+          }
+          proceed = false;
+        }
+        else {
+          // ignore invalid sysex messages   
+          this._sysex = [];
+          this._pendingSysex = false;
+        }
+      }
+      if (proceed) {
+        const data = this.parseMessage(bytes);
+        if ((data.type === 'sysex') && (bytes[bytes.length - 1] !== 0xf7)) {
+          this._sysex = [...bytes];
+          this._pendingSysex = true;
+        }
+        else {
+          data.msg._type = data.type; // easy access to message type
+          this.emit(data.type, data.msg);
+          // also emit "message" event, to allow easy monitoring of all messages
+          this.emit('message', data.msg);
+          if (data.type === 'mtc') {
+            this.parseMtc(data.msg);
+          }
+        }
+      }
+    });
+  }
 
-Input.prototype.close = function () {
-  this._input.closePort();
-};
+  close() {
+    this._input.closePort();
+  }
 
-Input.prototype.isPortOpen = function () {
-  return this._input.isPortOpen();
-};
+  isPortOpen() {
+    this._input.isPortOpen();
+  }
 
-Input.prototype.parseMtc = function (data) {
-  var byteNumber = data.type
-  var value = data.value
-  if (byteNumber == 7) {
-    var bits = [];
-    for (var i = 3; i >= 0; i--) {
-      var bit = value & (1 << i) ? 1 : 0;
-      bits.push(bit);
+  parseMtc(data) {
+    const byteNumber = data.type;
+    const value = data.value;
+    const smpte = [];
+    let smpteMessageCounter = 0;
+    let smpteType;
+
+    if (byteNumber === 7) {
+      const bits = [];
+      for (let i = 3; i >= 0; i--) {
+        const bit = value & (1 << i) ? 1 : 0;
+        bits.push(bit);
+      }
+      value = bits[3];
+      smpteType = (bits[1] * 2) + bits[2];
     }
-    value = bits[3];
-    smpteType = (bits[1] * 2) + bits[2];
-  }
-  smpte[byteNumber] = value;
-  if (smpteMessageCounter != 7){
-    smpteMessageCounter++;
-    return;
-  }
-  if (byteNumber == 7) {
-    var smpteFormatted =
+    smpte[byteNumber] = value;
+    if (smpteMessageCounter !== 7) {
+      smpteMessageCounter++;
+      return;
+    }
+    if (byteNumber === 7) {
+      const smpteFormatted =
         (smpte[7] * 16 + smpte[6]).toString().padStart(2, '0')
         + ':'
         + (smpte[5] * 16 + smpte[4]).toString().padStart(2, '0')
@@ -103,200 +136,162 @@ Input.prototype.parseMtc = function (data) {
         + ':'
         + (smpte[1] * 16 + smpte[0]).toString().padStart(2, '0');
 
-    this.emit("smpte", {
-      smpte: smpteFormatted,
-      smpteType: smpteType
-    });
+      this.emit('smpte', {
+        smpte: smpteFormatted,
+        smpteType,
+      });
+    }
+  }
+
+  parseMessage(bytes) {
+    const msg = {};
+    let type = 'unknown';
+
+    if (bytes[0] >= 0xF0) {
+      type = INPUT_EXTENDED_TYPES[bytes[0]];
+    } else {
+      type = INPUT_TYPES[bytes[0] >> 4];
+      msg.channel = bytes[0] & 0xF;
+    }
+    if (type === 'noteoff' || type === 'noteon') {
+      msg.note = bytes[1];
+      msg.velocity = bytes[2];
+    }
+    if (type === 'cc') {
+      msg.controller = bytes[1];
+      msg.value = bytes[2];
+    }
+    if (type === 'poly aftertouch') {
+      msg.note = bytes[1];
+      msg.pressure = bytes[2];
+    }
+    if (type === 'channel aftertouch') {
+      msg.pressure = bytes[1];
+    }
+    if (type === 'program') {
+      msg.number = bytes[1];
+    }
+    if (type === 'pitch' || type === 'position') {
+      msg.value = bytes[1] + (bytes[2] * 128);
+    }
+    if (type === 'sysex') {
+      msg.bytes = bytes;
+    }
+    if (type === 'select') {
+      msg.song = bytes[1];
+    }
+    if (type === 'mtc') {
+      msg.type = (bytes[1] >> 4) & 0x07;
+      msg.value = bytes[1] & 0x0F;
+    }
+    return {
+      type,
+      msg,
+    };
+  }
+}
+
+
+class Output {
+  constructor(name, virtual) {
+    this._output = new midi.output();
+    this.name = name;
+
+    if (virtual) {
+      this._output.openVirtualPort(name);
+    } else {
+      const numOutputs = this._output.getPortCount();
+      let found = false;
+      for (let i = 0; i < numOutputs; i++) {
+        if (name === this._output.getPortName(i)) {
+          found = true;
+          this._output.openPort(i);
+        }
+      }
+      if (!found) {
+        throw new Error('No MIDI output found with name: ' + name);
+      }
+    }
+  }
+
+  close() {
+    this._output.closePort();
+  }
+
+  isPortOpen() {
+    this._output.isPortOpen();
+  }
+
+  send(type, args) {
+    this._output.sendMessage(this.parseMessage(type, args));
+  }
+
+  parseMessage(type, args) {
+    const bytes = [];
+
+    if (OUTPUT_TYPES[type]) {
+      args.channel = args.channel || 0;
+      bytes.push((OUTPUT_TYPES[type] << 4) + args.channel);
+    } else if (OUTPUT_EXTENDED_TYPES[type]) {
+      bytes.push(OUTPUT_EXTENDED_TYPES[type]);
+    } else {
+      throw new Error('Unknown midi message type: ' + type);
+    }
+
+    if (type === 'noteoff' || type === 'noteon') {
+      bytes.push(args.note);
+      bytes.push(args.velocity);
+    }
+    if (type === 'cc') {
+      bytes.push(args.controller);
+      bytes.push(args.value);
+    }
+    if (type === 'poly aftertouch') {
+      bytes.push(args.note);
+      bytes.push(args.pressure);
+    }
+    if (type === 'channel aftertouch') {
+      bytes.push(args.pressure);
+    }
+    if (type === 'program') {
+      bytes.push(args.number);
+    }
+    if (type === 'pitch' || type === 'position') {
+      bytes.push(args.value & 0x7F); // lsb
+      bytes.push((args.value & 0x3F80) >> 7); // msb
+    }
+    if (type === 'mtc') {
+      bytes.push((args.type << 4) + args.value);
+    }
+    if (type === 'select') {
+      bytes.push(args.song);
+    }
+    if (type === 'sysex') {
+      // sysex commands should start with 0xf0 and end with 0xf7. Throw an error if it doesn't.
+      if (args.length <= 3 || args[0] !== 0xf0 || args[args.length - 1] !== 0xf7) { //
+        throw new Error("sysex commands should be an array that starts with 0xf0 and end with 0xf7");
+      }
+      args.slice(1).forEach((arg) => bytes.push(arg)); // 0xf0 was already added at the beginning of parseMessage.
+    }
+    return bytes;
   }
 };
 
-Input.prototype.parseMessage = function (bytes) {
-  var types = {
-    0x08: 'noteoff',
-    0x09: 'noteon',
-    0x0A: 'poly aftertouch',
-    0x0B: 'cc',
-    0x0C: 'program',
-    0x0D: 'channel aftertouch',
-    0x0E: 'pitch',
-  };
-  var extendedTypes = {
-    0xF0: 'sysex',
-    0xF1: 'mtc',
-    0xF2: 'position',
-    0xF3: 'select',
-    0xF6: 'tune',
-    0xF7: 'sysex end',
-    0xF8: 'clock',
-    0xFA: 'start',
-    0xFB: 'continue',
-    0xFC: 'stop',
-    0xFE: 'activesense',
-    0xFF: 'reset'
-  };
-  var type = 'unknown';
-  var msg = {};
-  if (bytes[0] >= 0xF0) {
-    type = extendedTypes[bytes[0]];
-  } else {
-    type = types[bytes[0] >> 4];
-    msg.channel = bytes[0] & 0xF;
-  }
-  if (type == 'noteoff' || type == 'noteon') {
-    msg.note = bytes[1];
-    msg.velocity = bytes[2];
-  }
-  if (type == 'cc') {
-    msg.controller = bytes[1];
-    msg.value = bytes[2];
-  }
-  if (type == 'poly aftertouch') {
-    msg.note = bytes[1];
-    msg.pressure = bytes[2];
-  }
-  if (type == 'channel aftertouch') {
-    msg.pressure = bytes[1];
-  }
-  if (type == 'program') {
-    msg.number = bytes[1];
-  }
-  if (type == 'pitch' || type == 'position') {
-    msg.value = bytes[1] + (bytes[2] * 128);
-  }
-  if (type == 'sysex') {
-    msg.bytes = bytes;
-  }
-  if (type == 'select') {
-    msg.song = bytes[1];
-  }
-  if (type == 'mtc') {
-    msg.type = (bytes[1] >> 4) & 0x07;
-    msg.value = bytes[1] & 0x0F;
-  }
-  return {
-    type: type,
-    msg: msg
-  };
-};
-
-function getInputs() {
-  var input = new midi.input();
-  var inputs = [];
-  for (var i = 0; i < input.getPortCount(); i++) {
+// utilities
+const getInputs = () => {
+  const input = new midi.input();
+  const inputs = [];
+  for (let i = 0; i < input.getPortCount(); i++) {
     inputs.push(input.getPortName(i));
   }
   input.closePort();
   return inputs;
 }
 
-var Output = function (name, virtual) {
-  this._output = new midi.output();
-  if (virtual) {
-    this._output.openVirtualPort(name);
-  } else {
-    var numOutputs = this._output.getPortCount();
-    var found = false;
-    for (var i = 0; i < numOutputs; i++) {
-      if (name == this._output.getPortName(i)) {
-        found = true;
-        this._output.openPort(i);
-      }
-    }
-    if (!found) {
-      throw new Error('No MIDI output found with name: ' + name);
-    }
-  }
-};
-
-Output.prototype.close = function () {
-  this._output.closePort();
-};
-
-Output.prototype.isPortOpen = function () {
-  return this._output.isPortOpen();
-};
-
-Output.prototype.send = function (type, args) {
-  this._output.sendMessage(this.parseMessage(type, args));
-};
-
-Output.prototype.parseMessage = function (type, args) {
-  var types = {
-    'noteoff': 0x08,
-    'noteon': 0x09,
-    'poly aftertouch': 0x0A,
-    'cc': 0x0B,
-    'program': 0x0C,
-    'channel aftertouch': 0x0D,
-    'pitch': 0x0E
-  };
-  var extendedTypes = {
-    'sysex': 0xF0,
-    'mtc': 0xF1,
-    'position': 0xF2,
-    'select': 0xF3,
-    'tune': 0xF6,
-    'sysex end': 0xF7,
-    'clock': 0xF8,
-    'start': 0xFA,
-    'continue': 0xFB,
-    'stop': 0xFC,
-    'activesense': 0xFE,
-    'reset': 0xFF
-  };
-
-  var bytes = [];
-  if (types[type]) {
-    args.channel = args.channel || 0;
-    bytes.push((types[type] << 4) + args.channel);
-  } else if (extendedTypes[type]) {
-    bytes.push(extendedTypes[type]);
-  } else {
-    throw new Error('Unknown midi message type: ' + type);
-  }
-
-  if (type == 'noteoff' || type == 'noteon') {
-    bytes.push(args.note);
-    bytes.push(args.velocity);
-  }
-  if (type == 'cc') {
-    bytes.push(args.controller);
-    bytes.push(args.value);
-  }
-  if (type == 'poly aftertouch') {
-    bytes.push(args.note);
-    bytes.push(args.pressure);
-  }
-  if (type == 'channel aftertouch') {
-    bytes.push(args.pressure);
-  }
-  if (type == 'program') {
-    bytes.push(args.number);
-  }
-  if (type == 'pitch' || type == 'position') {
-    bytes.push(args.value & 0x7F); // lsb
-    bytes.push((args.value & 0x3F80) >> 7); // msb
-  }
-  if (type == 'mtc') {
-    bytes.push((args.type << 4) + args.value);
-  }
-  if (type == 'select') {
-    bytes.push(args.song);
-  }
-  if (type == 'sysex') {
-    // sysex commands should start with 0xf0 and end with 0xf7. Throw an error if it doesn't.
-    if (args.length<=3 || args[0]!=0xf0 || args[args.length-1]!=0xf7) { //
-      throw new Error("sysex commands should be an array that starts with 0xf0 and end with 0xf7");
-    }
-    args.slice(1).forEach(function(arg){bytes.push(arg);}); // 0xf0 was already added at the beginning of parseMessage.
-  }
-  return bytes;
-};
-
-function getOutputs() {
-  var output = new midi.output();
-  var outputs = [];
-  for (var i = 0; i < output.getPortCount(); i++) {
+const getOutputs = () => {
+  const output = new midi.output();
+  const outputs = [];
+  for (let i = 0; i < output.getPortCount(); i++) {
     outputs.push(output.getPortName(i));
   }
   output.closePort();
@@ -304,8 +299,8 @@ function getOutputs() {
 }
 
 module.exports = {
-  Input: Input,
-  getInputs: getInputs,
-  Output: Output,
-  getOutputs: getOutputs
+  Input,
+  getInputs,
+  Output,
+  getOutputs,
 };
