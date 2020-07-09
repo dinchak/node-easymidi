@@ -66,6 +66,7 @@ export declare class Input extends EventEmitter {
   on(evt: "stop", handler: () => void): this;
   on(evt: "activesense", handler: () => void): this;
   on(evt: "reset", handler: () => void): this;
+  close();
 }
 
 export declare class Output {
@@ -86,6 +87,7 @@ export declare class Output {
   send(evt: "stop"): void;
   send(evt: "activesense"): void;
   send(evt: "reset"): void;
+  close();
 }
 
 export declare function getInputs(): string[];
