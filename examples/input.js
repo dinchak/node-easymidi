@@ -1,60 +1,33 @@
-var easymidi = require('../index.js');
+const easymidi = require('../index.js');
 
-// create virtual midi input named 'input test'
-var input = new easymidi.Input('LPK25');
+const INPUT_NAME = 'YOUR_INPUT_NAME';
 
-input.on('noteoff', function (msg) {
-  console.log('noteoff', msg.note, msg.velocity, msg.channel);
-});
+const input = new easymidi.Input(INPUT_NAME);
 
-input.on('noteon', function (msg) {
-  console.log('noteon', msg.note, msg.velocity, msg.channel);
-});
+input.on('noteoff', msg => console.log('noteoff', msg.note, msg.velocity, msg.channel));
 
-input.on('poly aftertouch', function (msg) {
-  console.log('poly aftertouch', msg.note, msg.pressure, msg.channel);
-});
+input.on('noteon', msg => console.log('noteon', msg.note, msg.velocity, msg.channel));
 
-input.on('cc', function (msg) {
-  console.log('cc', msg.controller, msg.value, msg.channel);
-});
+input.on('poly aftertouch', msg => console.log('poly aftertouch', msg.note, msg.pressure, msg.channel));
 
-input.on('program', function (msg) {
-  console.log('program', msg.number, msg.channel);
-});
+input.on('cc', msg => console.log('cc', msg.controller, msg.value, msg.channel));
 
-input.on('channel aftertouch', function (msg) {
-  console.log('channel aftertouch', msg.pressure, msg.channel);
-});
+input.on('program', msg => console.log('program', msg.number, msg.channel));
 
-input.on('pitch', function (msg) {
-  console.log('pitch', msg.value, msg.channel);
-});
+input.on('channel aftertouch', msg => console.log('channel aftertouch', msg.pressure, msg.channel));
 
-input.on('position', function (msg) {
-  console.log('position', msg.value);
-});
+input.on('pitch', msg => console.log('pitch', msg.value, msg.channel));
 
-input.on('select', function (msg) {
-  console.log('select', msg.song);
-});
+input.on('position', msg => console.log('position', msg.value));
 
-input.on('clock', function () {
-  console.log('clock');
-});
+input.on('select', msg => console.log('select', msg.song));
 
-input.on('start', function () {
-  console.log('start');
-});
+input.on('clock', () => console.log('clock'));
 
-input.on('continue', function () {
-  console.log('continue');
-});
+input.on('start', () => console.log('start'))
 
-input.on('stop', function () {
-  console.log('stop');
-});
+input.on('continue', () => console.log('continue'));
 
-input.on('reset', function () {
-  console.log('reset');
-});
+input.on('stop', () => console.log('stop'));
+
+input.on('reset', () => console.log('reset'));

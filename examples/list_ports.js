@@ -1,4 +1,4 @@
-var easymidi = require('../index.js');
+const easymidi = require('../index.js');
 
 console.log('MIDI inputs:');
 console.log(easymidi.getInputs());

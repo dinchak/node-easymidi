@@ -1,16 +1,16 @@
-var expect = require('chai').expect;
-var easymidi = require('../index.js');
+const expect = require('chai').expect;
+const easymidi = require('../index.js');
 
-var input = new easymidi.Input('test input', true);
-var output = new easymidi.Output('test output', true);
+const input = new easymidi.Input('test input', true);
+const output = new easymidi.Output('test output', true);
 
 // route send to input
-output.send = function (type, args) {
+output.send = (type, args) => {
   input._input.emit('message', -1, output.parseMessage(type, args));
 };
 
-it('receives a noteon message', function (done) {
-  input.once('noteon', function (data) {
+it('receives a noteon message', (done) => {
+  input.once('noteon', (data) => {
     expect(data.note).to.equal(30);
     expect(data.velocity).to.equal(11);
     expect(data.channel).to.equal(10);
@@ -23,8 +23,8 @@ it('receives a noteon message', function (done) {
   });
 });
 
-it('receives a noteoff message', function (done) {
-  input.once('noteoff', function (data) {
+it('receives a noteoff message', (done) => {
+  input.once('noteoff', (data) => {
     expect(data.note).to.equal(10);
     expect(data.velocity).to.equal(0);
     expect(data.channel).to.equal(0);
@@ -37,8 +37,8 @@ it('receives a noteoff message', function (done) {
   });
 });
 
-it('receives a cc message', function (done) {
-  input.once('cc', function (data) {
+it('receives a cc message', (done) => {
+  input.once('cc', (data) => {
     expect(data.controller).to.equal(100);
     expect(data.value).to.equal(127);
     expect(data.channel).to.equal(10);
@@ -51,8 +51,8 @@ it('receives a cc message', function (done) {
   });
 });
 
-it('receives a program message', function (done) {
-  input.once('program', function (data) {
+it('receives a program message', (done) => {
+  input.once('program', (data) => {
     expect(data.number).to.equal(100);
     expect(data.channel).to.equal(10);
     done();
@@ -63,8 +63,8 @@ it('receives a program message', function (done) {
   });
 });
 
-it('receives a channel aftertouch message', function (done) {
-  input.once('channel aftertouch', function (data) {
+it('receives a channel aftertouch message', (done) => {
+  input.once('channel aftertouch', (data) => {
     expect(data.pressure).to.equal(100);
     expect(data.channel).to.equal(10);
     done();
@@ -75,8 +75,8 @@ it('receives a channel aftertouch message', function (done) {
   });
 });
 
-it('receives a pitch message', function (done) {
-  input.once('pitch', function (data) {
+it('receives a pitch message', (done) => {
+  input.once('pitch', (data) => {
     expect(data.value).to.equal(66);
     expect(data.channel).to.equal(5);
     done();
@@ -87,8 +87,8 @@ it('receives a pitch message', function (done) {
   });
 });
 
-it('receives a position message', function (done) {
-  input.once('position', function (data) {
+it('receives a position message', (done) => {
+  input.once('position', (data) => {
     expect(data.value).to.equal(255);
     done();
   });
@@ -97,8 +97,8 @@ it('receives a position message', function (done) {
   });
 });
 
-it('receives a mtc message', function (done) {
-  input.once('mtc', function (data) {
+it('receives a mtc message', (done) => {
+  input.once('mtc', (data) => {
     expect(data.type).to.equal(7);
     expect(data.value).to.equal(15);
     done();
@@ -109,8 +109,8 @@ it('receives a mtc message', function (done) {
   });
 });
 
-it('receives a select message', function (done) {
-  input.once('select', function (data) {
+it('receives a select message', (done) => {
+  input.once('select', (data) => {
     expect(data.song).to.equal(127);
     done();
   });
@@ -119,36 +119,36 @@ it('receives a select message', function (done) {
   });
 });
 
-it('receives a clock message', function (done) {
-  input.once('clock', function (data) {
+it('receives a clock message', (done) => {
+  input.once('clock', () => {
     done();
   });
   output.send('clock');
 });
 
-it('receives a start message', function (done) {
-  input.once('start', function (data) {
+it('receives a start message', (done) => {
+  input.once('start', () => {
     done();
   });
   output.send('start');
 });
 
-it('receives a continue message', function (done) {
-  input.once('continue', function (data) {
+it('receives a continue message', (done) => {
+  input.once('continue', () => {
     done();
   });
   output.send('continue');
 });
 
-it('receives a stop message', function (done) {
-  input.once('stop', function (data) {
+it('receives a stop message', (done) => {
+  input.once('stop', () => {
     done();
   });
   output.send('stop');
 });
 
-it('receives a reset message', function (done) {
-  input.once('reset', function (data) {
+it('receives a reset message', (done) => {
+  input.once('reset', () => {
     done();
   });
   output.send('reset');

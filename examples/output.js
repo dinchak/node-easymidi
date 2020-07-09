@@ -1,7 +1,8 @@
-var easymidi = require('../index');
+const easymidi = require('../index');
 
-// create virtual midi output named 'test output'
-var output = new easymidi.Output('test output', true);
+const OUTPUT_NAME = 'YOUR_OUTPUT_NAME';
+
+const output = new easymidi.Output(OUTPUT_NAME);
 
 output.send('noteoff', {
   note: 64,
