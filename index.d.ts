@@ -87,6 +87,7 @@ export declare class Output {
   send(evt: "stop"): void;
   send(evt: "activesense"): void;
   send(evt: "reset"): void;
+  send(evt: "sysex", param: Array<number>): void;
   close();
 }
 
