@@ -48,6 +48,10 @@ export interface Select {
   song: number;
 }
 
+export interface Sysex {
+  bytes: number[];
+}
+
 export declare class Input extends EventEmitter {
   constructor(name: string, virtual?: boolean);
   name: string;
@@ -66,7 +70,7 @@ export declare class Input extends EventEmitter {
   on(evt: "stop", handler: () => void): this;
   on(evt: "activesense", handler: () => void): this;
   on(evt: "reset", handler: () => void): this;
-  on(evt: "sysex", handler: (param: Array<number>) => void): this;
+  on(evt: "sysex", handler: (param: Sysex) => void): this;
   close();
 }
 
