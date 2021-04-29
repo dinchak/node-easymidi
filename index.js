@@ -107,8 +107,8 @@ class Input extends EventEmitter {
 
   parseMtc(data) {
     const byteNumber = data.type;
-    const value = data.value;
     const smpte = [];
+    let value = data.value;
     let smpteMessageCounter = 0;
     let smpteType;
 
