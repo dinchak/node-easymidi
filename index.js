@@ -102,7 +102,7 @@ class Input extends EventEmitter {
   }
 
   isPortOpen() {
-    this._input.isPortOpen();
+    return this._input.isPortOpen();
   }
 
   parseMtc(data) {
@@ -219,7 +219,7 @@ class Output {
   }
 
   isPortOpen() {
-    this._output.isPortOpen();
+    return this._output.isPortOpen();
   }
 
   send(type, args) {
