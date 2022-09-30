@@ -1,6 +1,6 @@
 {
   "name": "easymidi",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Simple event-based MIDI messaging",
   "main": "index.js",
   "scripts": {
