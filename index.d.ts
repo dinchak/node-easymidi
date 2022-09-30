@@ -77,6 +77,7 @@ export declare class Input extends EventEmitter {
 
 export declare class Output {
   constructor(name: string, virtual?: boolean);
+  name: string;
   send(evt: "noteon", param: Note): void;
   send(evt: "noteoff", param: Note): void;
   send(evt: "poly aftertouch", param: PolyAfterTouch): void;
