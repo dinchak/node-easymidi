@@ -1,4 +1,4 @@
-const midi = require('midi');
+const midi = require('@julusian/midi');
 const EventEmitter = require('events').EventEmitter;
 
 const swap = (obj) => Object.entries(obj).reduce((acc, [key, value]) => {
