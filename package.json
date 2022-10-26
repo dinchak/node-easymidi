@@ -1,10 +1,13 @@
 {
   "name": "easymidi",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Simple event-based MIDI messaging",
   "main": "index.js",
   "scripts": {
     "test": "mocha tests/test.js"
+  },
+  "engines": {
+    "node": ">=14.15"
   },
   "repository": {
     "type": "git",
