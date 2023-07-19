@@ -40,6 +40,7 @@ class Input extends EventEmitter {
     this._pendingSysex = false;
     this._sysex = [];
     this.name = name;
+    this.inputPortNumberedNames = getInputs();
 
     if (virtual) {
       this._input.openVirtualPort(name);
@@ -47,7 +48,7 @@ class Input extends EventEmitter {
       const numInputs = this._input.getPortCount();
       let found = false;
       for (let i = 0; i < numInputs; i++) {
-        if (name === this._input.getPortName(i)) {
+        if (name === this.inputPortNumberedNames[i]) {
           found = true;
           this._input.openPort(i);
         }
@@ -196,6 +197,7 @@ class Output {
   constructor(name, virtual) {
     this._output = new midi.output();
     this.name = name;
+    this.outputPortNumberedNames = getOutputs();
 
     if (virtual) {
       this._output.openVirtualPort(name);
@@ -203,7 +205,7 @@ class Output {
       const numOutputs = this._output.getPortCount();
       let found = false;
       for (let i = 0; i < numOutputs; i++) {
-        if (name === this._output.getPortName(i)) {
+        if (name === this.outputPortNumberedNames[i]) {
           found = true;
           this._output.openPort(i);
         }
@@ -282,7 +284,14 @@ const getInputs = () => {
   const input = new midi.input();
   const inputs = [];
   for (let i = 0; i < input.getPortCount(); i++) {
-    inputs.push(input.getPortName(i));
+    var counter = 0;
+    const portName = input.getPortName(i);
+    var numberedPortName = portName;
+    while(inputs.includes(numberedPortName)) {
+      counter++;
+      numberedPortName = portName + counter;
+    }
+    inputs.push(numberedPortName);
   }
   input.closePort();
   return inputs;
@@ -292,7 +301,14 @@ const getOutputs = () => {
   const output = new midi.output();
   const outputs = [];
   for (let i = 0; i < output.getPortCount(); i++) {
-    outputs.push(output.getPortName(i));
+    var counter = 0;
+    const portName = output.getPortName(i);
+    var numberedPortName = portName;
+    while(outputs.includes(numberedPortName)) {
+      counter++;
+      numberedPortName = portName + counter;
+    }
+    outputs.push(numberedPortName);
   }
   output.closePort();
   return outputs;
