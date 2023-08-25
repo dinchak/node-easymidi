@@ -12,8 +12,8 @@ npm install easymidi
 The module can interface with existing MIDI inputs/outputs or create virtual inputs/outputs.  Here's a simple example to listen for note on events from an existing MIDI input:
 
 ```javascript
-var easymidi = require('easymidi');
-var input = new easymidi.Input('MIDI Input Name');
+const easymidi = require('easymidi');
+const input = new easymidi.Input('MIDI Input Name');
 input.on('noteon', function (msg) {
   // do something with msg
 });
@@ -22,8 +22,8 @@ input.on('noteon', function (msg) {
 Here's an example of sending a note on message to an existing MIDI output:
 
 ```javascript
-var easymidi = require('easymidi');
-var output = new easymidi.Output('MIDI Output Name');
+const easymidi = require('easymidi');
+const output = new easymidi.Output('MIDI Output Name');
 output.send('noteon', {
   note: 64,
   velocity: 127,
@@ -37,26 +37,26 @@ The Input and Output objects are [EventEmitters](http://nodejs.org/api/events.ht
 Virtual devices can be created by passing a `true` argument to the Input or Output constructors:
 
 ```javascript
-var virtualInput = new easymidi.Input('Virtual input name', true);
-var virtualOutput = new easymidi.Output('Virtual output name', true);
+const virtualInput = new easymidi.Input('Virtual input name', true);
+const virtualOutput = new easymidi.Output('Virtual output name', true);
 ```
 
 # Device Lists
 You can get an array of existing MIDI input or output names using the `getInputs()` and `getOutputs` functions:
 
 ```javascript
-var inputs = easymidi.getInputs();
-var outputs = easymidi.getOutputs();
+const inputs = easymidi.getInputs();
+const outputs = easymidi.getOutputs();
 ```
 
 # Closing Devices
 When you're finished with a MIDI device you can `close()` it:
 
 ```javascript
-var input = new easymidi.Input('My input', true);
+const input = new easymidi.Input('My input', true);
 input.close();
 
-var output = new easymidi.Output('My output', true);
+const output = new easymidi.Output('My output', true);
 output.close();
 ```
 
