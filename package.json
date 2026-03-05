@@ -1,13 +1,13 @@
 {
   "name": "easymidi",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Simple event-based MIDI messaging",
   "main": "index.js",
   "scripts": {
-    "test": "mocha tests/test.js"
+    "test": "node --test tests/test.js"
   },
   "engines": {
-    "node": ">=14.15"
+    "node": ">=18.0.0"
   },
   "repository": {
     "type": "git",
@@ -25,11 +25,7 @@
     "url": "https://github.com/dinchak/node-easymidi/issues"
   },
   "homepage": "https://github.com/dinchak/node-easymidi",
-  "devDependencies": {
-    "chai": "^4.3.6",
-    "mocha": "^10.1.0"
-  },
   "dependencies": {
-    "@julusian/midi": "^3.0.0-3"
+    "@julusian/midi": "^3.6.1"
   }
 }
